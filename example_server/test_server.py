@@ -1,28 +1,29 @@
 import tornado.ioloop
-import tornado.web
 import tornado.websocket
+from json import dumps, loads
 
 clients = []
 
-class IndexHandler(tornado.web.RequestHandler):
-    @tornado.web.asynchronous
-    def get(request):
-        request.render("index.html")
-
-class WebSocketChatHandler(tornado.websocket.WebSocketHandler):
+class WebSocketPictionaryHandler(tornado.websocket.WebSocketHandler):
     def open(self, *args):
         print("open", "WebSocketChatHandler")
         clients.append(self)
+        stuff = {
+            'command': 'become_artist'
+        }
+        self.write_message(dumps(stuff))
 
-    def on_message(self, message):        
-        print(message)
+
+    def on_message(self, message):
+        data = loads(message)
+        print(data)
         for client in clients:
-            client.write_message(message)
+            client.write_message(dumps(data['command']))
 
     def on_close(self):
         clients.remove(self)
 
-app = tornado.web.Application([(r'/chat', WebSocketChatHandler), (r'/', IndexHandler)])
+app = tornado.web.Application([(r'/', WebSocketPictionaryHandler)])
 
 app.listen(8000)
 tornado.ioloop.IOLoop.instance().start()
